@@ -3,10 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sensors/sensors.dart';
+
 
 void main() {
   runApp(MyApp());
 }
+
+const int minSpeed =10;
+const int maxSpeed =30;
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -31,6 +36,7 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(title: 'Connected Cars'),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -71,41 +77,58 @@ class _MyHomePageState extends State<MyHomePage> {
       // called again, and so nothing would appear to happen.
 
       measureTime(newSpeed);
+
+// [UserAccelerometerEvent (x: 0.0, y: 0.0, z: 0.0)]
       _speed = newSpeed;
     });
-  }
-
-  void measureTime(int newSpeed) {
-    if (newSpeed == 30 && _oldSpeed == 10 && _isUp) {
-      int now = currentTimeInSeconds();
-      _isUp = false;
-      _isDown = true;
-      _from10To30Time = now - _oldTime;
-      _oldTime = now;
-      _oldSpeed = 30;
-    } else if (newSpeed == 10 && _oldSpeed == 30 && _isDown) {
-      int now = currentTimeInSeconds();
-      _isUp = true;
-      _isDown = false;
-      _from30To10Time = (now - _oldTime);
-      _oldTime = now;
-      _oldSpeed = 10;
-    } else if (newSpeed == 10 && _oldSpeed == 0) {
-      // for first time
-      _oldTime = currentTimeInSeconds();
-      _oldSpeed = 10;
-      _isUp = true;
-      _isDown = false;
-    } else if ((newSpeed == 30 && _oldSpeed == 30) ||
-        (newSpeed == 10 && _oldSpeed == 10)) {
-      _oldTime = currentTimeInSeconds();
-    }
   }
 
   /// the current time, in “seconds since the epoch”
   static int currentTimeInSeconds() {
     var ms = (new DateTime.now()).millisecondsSinceEpoch;
     return (ms / 1000).round();
+  }
+
+
+  void measureTime(int newSpeed) {
+    if (newSpeed == maxSpeed && _oldSpeed == minSpeed && _isUp) {
+      int now = currentTimeInSeconds();
+      _isUp = false;
+      _isDown = true;
+      _from10To30Time = now - _oldTime;
+      _oldTime = now;
+      _oldSpeed = maxSpeed;
+    } else if (newSpeed == minSpeed && _oldSpeed == maxSpeed && _isDown) {
+      int now = currentTimeInSeconds();
+      _isUp = true;
+      _isDown = false;
+      _from30To10Time = (now - _oldTime);
+      _oldTime = now;
+      _oldSpeed = minSpeed;
+    } else if (newSpeed == minSpeed && _oldSpeed == 0) {
+      // for first time
+      _oldTime = currentTimeInSeconds();
+      _oldSpeed = 10;
+      _isUp = true;
+      _isDown = false;
+    } else if ((newSpeed == maxSpeed && _oldSpeed == maxSpeed) ||
+        (newSpeed == minSpeed && _oldSpeed == minSpeed)) {
+      _oldTime = currentTimeInSeconds();
+    }
+  }
+
+
+
+  @override
+  void initState() {
+
+    userAccelerometerEvents.listen((UserAccelerometerEvent event) {
+    //print((event.y).round().abs()*10);
+    //Equation to convert every 1 m/s to kmh for testing only
+      _setSpeed((event.y).round().abs()*10);
+    });
+
+    super.initState();
   }
 
   @override
@@ -168,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 children: [
                   Text(
-                    'From 10 to 30',
+                    'From $minSpeed to $maxSpeed',
                     style: TextStyle(fontSize: 25),
                   ),
                   Text(
@@ -189,7 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 children: [
                   Text(
-                    'From 30 to 10',
+                    'From $maxSpeed to $minSpeed',
                     style: TextStyle(fontSize: 25),
                   ),
                   Text(
@@ -205,22 +228,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
             ),
-            RaisedButton(
-              child: const Text('-', style: TextStyle(fontSize: 20)),
-              onPressed: () {
-                if (_speed > 0) {
-                  _setSpeed(_speed - 10);
-                }
-              },
-            )
+//            RaisedButton(
+//              child: const Text('-', style: TextStyle(fontSize: 20)),
+//              onPressed: () {
+//                if (_speed > 0) {
+//                  _setSpeed(_speed - 10);
+//                }
+//              },
+//            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => {_setSpeed(_speed + 10)},
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+//      floatingActionButton: FloatingActionButton(
+//        onPressed: () => {_setSpeed(_speed + 10)},
+//        tooltip: 'Increment',
+//        child: Icon(Icons.add),
+//      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
