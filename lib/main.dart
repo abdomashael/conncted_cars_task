@@ -56,10 +56,10 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _speed = 0;
   int _oldSpeed = 0;
-  int _from10To30Speed = 0;
-  int _from30To10Speed = 0;
-  int _oldTime=0;
-  bool _isDown=false;
+  int _from10To30Time = 0;
+  int _from30To10Time = 0;
+  int _oldTime = 0;
+  bool _isDown = false;
   bool _isUp = true;
 
   void _setSpeed(int newSpeed) {
@@ -70,32 +70,36 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
 
-      if (newSpeed == 30 && _oldSpeed==10 && _isUp ) {
-        int now = currentTimeInSeconds();
-        _isUp=false;
-        _isDown=true;
-        _from10To30Speed = now - _oldTime;
-        _oldTime=now;
-        _oldSpeed=30;
-
-      } else if (newSpeed == 10 && _oldSpeed==30 && _isDown ) {
-        int now = currentTimeInSeconds();
-        _isUp=true;
-        _isDown=false;
-        _from30To10Speed = (now - _oldTime);
-        _oldTime=now;
-        _oldSpeed=10;
-      }else if(newSpeed == 10 && _oldSpeed==0 ){
-        // for first time
-        _oldTime=currentTimeInSeconds();
-        _oldSpeed=10;
-      }else if((newSpeed==30 && _oldSpeed==30)||(newSpeed==10 && _oldSpeed==10)){
-        _oldTime=currentTimeInSeconds();
-      }
-
-
+      measureTime(newSpeed);
       _speed = newSpeed;
     });
+  }
+
+  void measureTime(int newSpeed) {
+    if (newSpeed == 30 && _oldSpeed == 10 && _isUp) {
+      int now = currentTimeInSeconds();
+      _isUp = false;
+      _isDown = true;
+      _from10To30Time = now - _oldTime;
+      _oldTime = now;
+      _oldSpeed = 30;
+    } else if (newSpeed == 10 && _oldSpeed == 30 && _isDown) {
+      int now = currentTimeInSeconds();
+      _isUp = true;
+      _isDown = false;
+      _from30To10Time = (now - _oldTime);
+      _oldTime = now;
+      _oldSpeed = 10;
+    } else if (newSpeed == 10 && _oldSpeed == 0) {
+      // for first time
+      _oldTime = currentTimeInSeconds();
+      _oldSpeed = 10;
+      _isUp = true;
+      _isDown = false;
+    } else if ((newSpeed == 30 && _oldSpeed == 30) ||
+        (newSpeed == 10 && _oldSpeed == 10)) {
+      _oldTime = currentTimeInSeconds();
+    }
   }
 
   /// the current time, in “seconds since the epoch”
@@ -103,6 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
     var ms = (new DateTime.now()).millisecondsSinceEpoch;
     return (ms / 1000).round();
   }
+
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -124,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // Column is also a layout widget. It takes a list of children and
           // arranges them vertically. By default, it sizes itself to fit its
           // children horizontally, and tries to be as tall as its parent.
-           //
+          //
           // Invoke "debug painting" (press "p" in the console, choose the
           // "Toggle Debug Paint" action from the Flutter Inspector in Android
           // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
@@ -149,7 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     '$_speed',
                     style: GoogleFonts.iceberg(
                         textStyle:
-                        TextStyle(color: Colors.green, fontSize: 120)),
+                            TextStyle(color: Colors.green, fontSize: 120)),
                   ),
                   Text(
                     "kmh",
@@ -167,10 +172,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     style: TextStyle(fontSize: 25),
                   ),
                   Text(
-                    '$_from10To30Speed',
+                    '$_from10To30Time',
                     style: GoogleFonts.iceberg(
                         textStyle:
-                        TextStyle(color: Colors.green, fontSize: 50)),
+                            TextStyle(color: Colors.green, fontSize: 50)),
                   ),
                   Text(
                     "seconds",
@@ -183,39 +188,39 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
               child: Column(
                 children: [
-                Text(
-                  'From 30 to 10',
-                  style: TextStyle(fontSize: 25),
-                ),
-                Text(
-                  '$_from30To10Speed',
-                  style: GoogleFonts.iceberg(
-                      textStyle: TextStyle(color: Colors.green, fontSize: 50)),
-                ),
-                Text(
-                  "seconds",
-                  style: TextStyle(fontSize: 25),
-                ),
+                  Text(
+                    'From 30 to 10',
+                    style: TextStyle(fontSize: 25),
+                  ),
+                  Text(
+                    '$_from30To10Time',
+                    style: GoogleFonts.iceberg(
+                        textStyle:
+                            TextStyle(color: Colors.green, fontSize: 50)),
+                  ),
+                  Text(
+                    "seconds",
+                    style: TextStyle(fontSize: 25),
+                  ),
                 ],
               ),
             ),
-//            RaisedButton(
-//                child: const Text('-', style: TextStyle(fontSize: 20)),
-//              onPressed: (){
-//                if(_speed>0){
-//                  _setSpeed(_speed-10);
-//                }
-//              },
-//            )
-
+            RaisedButton(
+              child: const Text('-', style: TextStyle(fontSize: 20)),
+              onPressed: () {
+                if (_speed > 0) {
+                  _setSpeed(_speed - 10);
+                }
+              },
+            )
           ],
         ),
       ),
-//      floatingActionButton: FloatingActionButton(
-//        onPressed: () => {_setSpeed(_speed + 10)},
-//        tooltip: 'Increment',
-//        child: Icon(Icons.add),
-//      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => {_setSpeed(_speed + 10)},
+        tooltip: 'Increment',
+        child: Icon(Icons.add),
+      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
