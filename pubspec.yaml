@@ -23,6 +23,8 @@ environment:
 dependencies:
   google_fonts: ^1.1.0
   sensors: ^0.4.2+2
+  location: ^3.0.0
+
   flutter:
     sdk: flutter
 

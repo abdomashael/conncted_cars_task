@@ -1,17 +1,19 @@
 //import 'dart:html';
 
+//import 'dart:html';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sensors/sensors.dart';
-
+import 'package:location/location.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-const int minSpeed =10;
-const int maxSpeed =30;
+const int minSpeed = 10;
+const int maxSpeed = 30;
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -60,7 +62,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _speed = 0;
+  bool _serviceEnabled;
+  PermissionStatus _permissionGranted;
+
+  double _speed = 0;
   int _oldSpeed = 0;
   int _from10To30Time = 0;
   int _from30To10Time = 0;
@@ -68,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isDown = false;
   bool _isUp = true;
 
-  void _setSpeed(int newSpeed) {
+  void _setSpeed(double newSpeed) {
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
@@ -83,51 +88,15 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  /// the current time, in “seconds since the epoch”
-  static int currentTimeInSeconds() {
-    var ms = (new DateTime.now()).millisecondsSinceEpoch;
-    return (ms / 1000).round();
-  }
-
-
-  void measureTime(int newSpeed) {
-    if (newSpeed == maxSpeed && _oldSpeed == minSpeed && _isUp) {
-      int now = currentTimeInSeconds();
-      _isUp = false;
-      _isDown = true;
-      _from10To30Time = now - _oldTime;
-      _oldTime = now;
-      _oldSpeed = maxSpeed;
-    } else if (newSpeed == minSpeed && _oldSpeed == maxSpeed && _isDown) {
-      int now = currentTimeInSeconds();
-      _isUp = true;
-      _isDown = false;
-      _from30To10Time = (now - _oldTime);
-      _oldTime = now;
-      _oldSpeed = minSpeed;
-    } else if (newSpeed == minSpeed && _oldSpeed == 0) {
-      // for first time
-      _oldTime = currentTimeInSeconds();
-      _oldSpeed = 10;
-      _isUp = true;
-      _isDown = false;
-    } else if ((newSpeed == maxSpeed && _oldSpeed == maxSpeed) ||
-        (newSpeed == minSpeed && _oldSpeed == minSpeed)) {
-      _oldTime = currentTimeInSeconds();
-    }
-  }
-
-
-
   @override
   void initState() {
+//    userAccelerometerEvents.listen((UserAccelerometerEvent event) {
+//    //print((event.y).round().abs()*10);
+//    //Equation to convert every 1 m/s to kmh for testing only
+//      _setSpeed((event.y).round().abs()*10);
+//    });
 
-    userAccelerometerEvents.listen((UserAccelerometerEvent event) {
-    //print((event.y).round().abs()*10);
-    //Equation to convert every 1 m/s to kmh for testing only
-      _setSpeed((event.y).round().abs()*10);
-    });
-
+    _listenToLocation();
     super.initState();
   }
 
@@ -177,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     '$_speed',
                     style: GoogleFonts.iceberg(
                         textStyle:
-                            TextStyle(color: Colors.green, fontSize: 120)),
+                        TextStyle(color: Colors.green, fontSize: 120)),
                   ),
                   Text(
                     "kmh",
@@ -198,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     '$_from10To30Time',
                     style: GoogleFonts.iceberg(
                         textStyle:
-                            TextStyle(color: Colors.green, fontSize: 50)),
+                        TextStyle(color: Colors.green, fontSize: 50)),
                   ),
                   Text(
                     "seconds",
@@ -219,7 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     '$_from30To10Time',
                     style: GoogleFonts.iceberg(
                         textStyle:
-                            TextStyle(color: Colors.green, fontSize: 50)),
+                        TextStyle(color: Colors.green, fontSize: 50)),
                   ),
                   Text(
                     "seconds",
@@ -245,5 +214,95 @@ class _MyHomePageState extends State<MyHomePage> {
 //        child: Icon(Icons.add),
 //      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  Future<bool> _checkPermission(Location location) async {
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<bool> _checkServiceStatus(Location location) async {
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return true;
+    }
+  }
+
+  Future<void> _listenToLocation() async {
+    Location location = new Location();
+    await location.changeSettings(
+        accuracy: LocationAccuracy.high, interval: 1000, distanceFilter: 0);
+    bool serviceEnabled = await _checkServiceStatus(location);
+    if (serviceEnabled) {
+      bool havePermission = await _checkPermission(location);
+
+      if (havePermission) {
+        LocationData _locationData = await location.getLocation();
+        _setSpeed(double.parse((_locationData.speed * 3.6).toStringAsFixed(2)));
+
+        location.onLocationChanged.listen((LocationData currentLocation) {
+          // Use current location
+          print(currentLocation);
+          setState(() {
+            //to convert speed from m/s to km/h multiply by 3.6
+            _setSpeed(
+                double.parse((currentLocation.speed * 3.6).toStringAsFixed(2)));
+          });
+        });
+      }
+    }
+  }
+
+  /// the current time, in “seconds since the epoch”
+  static int currentTimeInSeconds() {
+    var ms = (new DateTime.now()).millisecondsSinceEpoch;
+    return (ms / 1000).round();
+  }
+
+  void measureTime(double currentSpeed) {
+    int newSpeed = currentSpeed.round();
+
+    bool inRangeOfMax = newSpeed >= maxSpeed - 2 && newSpeed <= maxSpeed + 2;
+    bool inRangeOfMin = newSpeed >= minSpeed - 2 && newSpeed <= minSpeed + 2;
+
+    if (inRangeOfMax && _oldSpeed == minSpeed && _isUp) {
+      int now = currentTimeInSeconds();
+      _isUp = false;
+      _isDown = true;
+      _from10To30Time = now - _oldTime;
+      _oldTime = now;
+      _oldSpeed = maxSpeed;
+    } else if (inRangeOfMin && _oldSpeed == maxSpeed && _isDown) {
+      int now = currentTimeInSeconds();
+      _isUp = true;
+      _isDown = false;
+      _from30To10Time = (now - _oldTime);
+      _oldTime = now;
+      _oldSpeed = minSpeed;
+    } else if (newSpeed == minSpeed && _oldSpeed == 0) {
+      // for first time
+      _oldTime = currentTimeInSeconds();
+      _oldSpeed = 10;
+      _isUp = true;
+      _isDown = false;
+    } else if ((newSpeed == maxSpeed && _oldSpeed == maxSpeed) ||
+        (newSpeed == minSpeed && _oldSpeed == minSpeed)) {
+      _oldTime = currentTimeInSeconds();
+    }
   }
 }
