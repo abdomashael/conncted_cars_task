@@ -12,8 +12,8 @@ void main() {
   runApp(MyApp());
 }
 
-const int minSpeed = 10;
-const int maxSpeed = 30;
+const int MIN_SPEED = 10;
+const int MAX_SPEED = 30;
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -75,39 +75,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _setSpeed(double newSpeed) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-
-      measureTime(newSpeed);
-
-// [UserAccelerometerEvent (x: 0.0, y: 0.0, z: 0.0)]
+      _measureTime(newSpeed);
       _speed = newSpeed;
     });
   }
 
   @override
   void initState() {
-//    userAccelerometerEvents.listen((UserAccelerometerEvent event) {
-//    //print((event.y).round().abs()*10);
-//    //Equation to convert every 1 m/s to kmh for testing only
-//      _setSpeed((event.y).round().abs()*10);
-//    });
-
     _listenToLocation();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -118,101 +98,14 @@ class _MyHomePageState extends State<MyHomePage> {
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-              child: Column(
-                children: [
-                  Text(
-                    'Current Speed',
-                    style: TextStyle(fontSize: 35),
-                  ),
-                  Text(
-                    '$_speed',
-                    style: GoogleFonts.iceberg(
-                        textStyle:
-                        TextStyle(color: Colors.green, fontSize: 120)),
-                  ),
-                  Text(
-                    "kmh",
-                    style: TextStyle(fontSize: 35),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-              child: Column(
-                children: [
-                  Text(
-                    'From $minSpeed to $maxSpeed',
-                    style: TextStyle(fontSize: 25),
-                  ),
-                  Text(
-                    '$_from10To30Time',
-                    style: GoogleFonts.iceberg(
-                        textStyle:
-                        TextStyle(color: Colors.green, fontSize: 50)),
-                  ),
-                  Text(
-                    "seconds",
-                    style: TextStyle(fontSize: 25),
-                  )
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
-              child: Column(
-                children: [
-                  Text(
-                    'From $maxSpeed to $minSpeed',
-                    style: TextStyle(fontSize: 25),
-                  ),
-                  Text(
-                    '$_from30To10Time',
-                    style: GoogleFonts.iceberg(
-                        textStyle:
-                        TextStyle(color: Colors.green, fontSize: 50)),
-                  ),
-                  Text(
-                    "seconds",
-                    style: TextStyle(fontSize: 25),
-                  ),
-                ],
-              ),
-            ),
-//            RaisedButton(
-//              child: const Text('-', style: TextStyle(fontSize: 20)),
-//              onPressed: () {
-//                if (_speed > 0) {
-//                  _setSpeed(_speed - 10);
-//                }
-//              },
-//            )
+            SpeedWidget(speed: _speed),
+            AccelerometerWidget(from30To10Time: _from10To30Time, maxSpeed: MAX_SPEED, minSpeed: MIN_SPEED),
+            AccelerometerWidget(from30To10Time: _from30To10Time,maxSpeed: MAX_SPEED,minSpeed: MIN_SPEED,),
           ],
         ),
       ),
-//      floatingActionButton: FloatingActionButton(
-//        onPressed: () => {_setSpeed(_speed + 10)},
-//        tooltip: 'Increment',
-//        child: Icon(Icons.add),
-//      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 
@@ -274,35 +167,110 @@ class _MyHomePageState extends State<MyHomePage> {
     return (ms / 1000).round();
   }
 
-  void measureTime(double currentSpeed) {
+  void _measureTime(double currentSpeed) {
     int newSpeed = currentSpeed.round();
 
-    bool inRangeOfMax = newSpeed >= maxSpeed - 2 && newSpeed <= maxSpeed + 2;
-    bool inRangeOfMin = newSpeed >= minSpeed - 2 && newSpeed <= minSpeed + 2;
+    bool inRangeOfMax = newSpeed >= MAX_SPEED - 2 && newSpeed <= MAX_SPEED + 2;
+    bool inRangeOfMin = newSpeed >= MIN_SPEED - 2 && newSpeed <= MIN_SPEED + 2;
 
-    if (inRangeOfMax && _oldSpeed == minSpeed && _isUp) {
+    if (inRangeOfMax && _oldSpeed == MIN_SPEED && _isUp) {
       int now = currentTimeInSeconds();
       _isUp = false;
       _isDown = true;
       _from10To30Time = now - _oldTime;
       _oldTime = now;
-      _oldSpeed = maxSpeed;
-    } else if (inRangeOfMin && _oldSpeed == maxSpeed && _isDown) {
+      _oldSpeed = MAX_SPEED;
+    } else if (inRangeOfMin && _oldSpeed == MAX_SPEED && _isDown) {
       int now = currentTimeInSeconds();
       _isUp = true;
       _isDown = false;
       _from30To10Time = (now - _oldTime);
       _oldTime = now;
-      _oldSpeed = minSpeed;
-    } else if (newSpeed == minSpeed && _oldSpeed == 0) {
+      _oldSpeed = MIN_SPEED;
+    } else if (newSpeed == MIN_SPEED && _oldSpeed == 0) {
       // for first time
       _oldTime = currentTimeInSeconds();
       _oldSpeed = 10;
       _isUp = true;
       _isDown = false;
-    } else if ((newSpeed == maxSpeed && _oldSpeed == maxSpeed) ||
-        (newSpeed == minSpeed && _oldSpeed == minSpeed)) {
+    } else if ((newSpeed == MAX_SPEED && _oldSpeed == MAX_SPEED) ||
+        (newSpeed == MIN_SPEED && _oldSpeed == MIN_SPEED)) {
       _oldTime = currentTimeInSeconds();
     }
+  }
+}
+
+class SpeedWidget extends StatelessWidget {
+  const SpeedWidget({
+    Key key,
+    @required double speed,
+  }) : _speed = speed, super(key: key);
+
+  final double _speed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+      child: Column(
+        children: [
+          Text(
+            'Current Speed',
+            style: TextStyle(fontSize: 35),
+          ),
+          Text(
+            '$_speed',
+            style: GoogleFonts.iceberg(
+                textStyle:
+                TextStyle(color: Colors.green, fontSize: 120)),
+          ),
+          Text(
+            "kmh",
+            style: TextStyle(fontSize: 35),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class AccelerometerWidget extends StatelessWidget {
+  final int _maxSpeed,_minSpeed;
+  final int _from30To10Time;
+
+
+  const AccelerometerWidget({
+    Key key,
+    @required int from30To10Time,
+    @required int maxSpeed,
+    @required int minSpeed,
+
+  }) : _from30To10Time = from30To10Time,_maxSpeed=maxSpeed,_minSpeed=minSpeed, super(key: key);
+
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+      child: Column(
+        children: [
+          Text(
+            'From $_maxSpeed to $_minSpeed',
+            style: TextStyle(fontSize: 25),
+          ),
+          Text(
+            '$_from30To10Time',
+            style: GoogleFonts.iceberg(
+                textStyle:
+                TextStyle(color: Colors.green, fontSize: 50)),
+          ),
+          Text(
+            "seconds",
+            style: TextStyle(fontSize: 25),
+          ),
+        ],
+      ),
+    );
   }
 }
