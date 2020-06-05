@@ -97,8 +97,8 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: ListView(
+          shrinkWrap: true,
           children: <Widget>[
             SpeedWidget(speed: _speed),
             AccelerometerWidget(from30To10Time: _from10To30Time, maxSpeed: MAX_SPEED, minSpeed: MIN_SPEED),
@@ -211,7 +211,7 @@ class SpeedWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(0, 16, 0, 16),
+      padding: EdgeInsets.fromLTRB(0, 16, 0, 32),
       child: Column(
         children: [
           Text(
