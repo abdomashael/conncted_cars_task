@@ -69,7 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
   int _oldSpeed = 0;
   int _from10To30Time = 0;
   int _from30To10Time = 0;
-  int _oldTime = 0;
+  int _oldDownTime = 0;
+  int _oldUpTime = 0;
   bool _isDown = false;
   bool _isUp = true;
 
@@ -170,33 +171,28 @@ class _MyHomePageState extends State<MyHomePage> {
   void _measureTime(double currentSpeed) {
     int newSpeed = currentSpeed.round();
 
-    bool inRangeOfMax = newSpeed >= MAX_SPEED - 2 && newSpeed <= MAX_SPEED + 2;
-    bool inRangeOfMin = newSpeed >= MIN_SPEED - 2 && newSpeed <= MIN_SPEED + 2;
-
-    if (inRangeOfMax && _oldSpeed == MIN_SPEED && _isUp) {
-      int now = currentTimeInSeconds();
-      _isUp = false;
-      _isDown = true;
-      _from10To30Time = now - _oldTime;
-      _oldTime = now;
-      _oldSpeed = MAX_SPEED;
-    } else if (inRangeOfMin && _oldSpeed == MAX_SPEED && _isDown) {
-      int now = currentTimeInSeconds();
-      _isUp = true;
+    if(newSpeed>10 && newSpeed<30 ){
+      if(_oldUpTime==0 && _isUp){
+        _oldUpTime = currentTimeInSeconds();
+      }else if(_oldDownTime==0 && _isDown){
+        _oldDownTime=currentTimeInSeconds();
+      }
+    }else if (newSpeed <= 10 && _isDown && _oldDownTime !=0){
+      _from30To10Time = currentTimeInSeconds()-_oldDownTime;
+      _oldDownTime = 0;
       _isDown = false;
-      _from30To10Time = (now - _oldTime);
-      _oldTime = now;
-      _oldSpeed = MIN_SPEED;
-    } else if (newSpeed == MIN_SPEED && _oldSpeed == 0) {
-      // for first time
-      _oldTime = currentTimeInSeconds();
-      _oldSpeed = 10;
-      _isUp = true;
-      _isDown = false;
-    } else if ((newSpeed == MAX_SPEED && _oldSpeed == MAX_SPEED) ||
-        (newSpeed == MIN_SPEED && _oldSpeed == MIN_SPEED)) {
-      _oldTime = currentTimeInSeconds();
+    }else if(newSpeed >= 30 && _isUp && _oldUpTime !=0){
+      _from10To30Time = currentTimeInSeconds()-_oldUpTime;
+      _oldUpTime = 0;
+      _isDown=true;
+      _isUp=false;
     }
+
+    //for Multi calculations please remove next multi-line Comment
+//    if(!_isDown && !_isUp){
+//      _isUp=true;
+//    }
+
   }
 }
 
@@ -215,6 +211,7 @@ class SpeedWidget extends StatelessWidget {
       child: Column(
         children: [
           Text(
+
             'Current Speed',
             style: TextStyle(fontSize: 35),
           ),
